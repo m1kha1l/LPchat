@@ -1,0 +1,180 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home page";
+}
+
+
+
+<div class="text-center"> 
+    <section id="landing"></section>
+                
+    </section>
+  
+      <section class="chat" id="chatid">
+        <div id="innerchat" class="messages-chat">
+
+        </div>
+      </section>
+    <br>
+    <table style="width:100%">
+        <td>
+            <form method="POST">
+                <textarea id="message" name="myMsg" rows="2" width="100%" placeholder="Type your message here..."></textarea>                
+            </form>
+        </td>
+        <td style="width:50px">
+            <button type="button" id="callAjax" style="border-style:none; background-color:#ffffff;"><img src="https://avatars.mds.yandex.net/i?id=9c0f0f75259afc45094a1d92cc7a3c4b93a60ca3-8187767-images-thumbs&n=13" style="width:100%; height:100%; border-style:none;" /></button>
+        </td>
+    </table>
+    <h4>@Model.Message</h4>
+    
+    @section Scripts
+        {
+        <script type="text/javascript">
+
+            var chatstarted=0;
+            var wakeUpMessages="";
+            var username="";
+            var shouldScroll=0;
+            var mylanding="";
+            var input = document.getElementById("message");
+          
+            input.addEventListener("keypress", function(event) {                      
+            if (event.key === "Enter") {             
+              event.preventDefault();                  
+                    document.getElementById("callAjax").click();
+                    document.getElementById("message").value = "";
+                }
+            });
+
+
+            
+            function readMessages() {
+          
+                if(username!=""){
+                $.ajax({
+                    type: "POST",
+                    url: '/Index?handler=GetMessages',
+                    data: { "username": username },
+                    contentType: 'application/x-www-form-urlencoded',
+                    dataType: "json",
+                    headers:
+                    {
+                        "RequestVerificationToken": $('input:hidden[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function (response) {
+                            document.getElementById('innerchat').innerHTML = wakeUpMessages + response;
+                            document.getElementById('chatid').scrollTop = document.getElementById('chatid').scrollHeight;
+                        }                       
+                    
+                          });
+                }
+                setTimeout(readMessages, 1000);
+             }
+
+             function addWakeUpMessage(){
+                 if(chatstarted==0){
+                    $.ajax({
+                        type: "POST",
+                        url: '/Index?handler=GetWakeUpMessage',
+                        headers:
+                        {
+                            "RequestVerificationToken": $('input:hidden[name="__RequestVerificationToken"]').val()
+                        },
+                        success: function (response) {
+                            wakeUpMessages += "<div class=\"message text-only\"><div class=\"message\"><p class=\"text\">" + response + "</p></div></div>";                           
+                           // alert(wakeUpMessages);
+                        }
+                    });
+                    setTimeout(addWakeUpMessage, 15 * 1000);
+                 }                                
+             }
+
+             function getLanding(){              
+                $.ajax({
+                    type: "POST",
+                    url: '/Index?handler=GetLanding',                   
+                    contentType: 'application/x-www-form-urlencoded',                 
+                    headers:
+                    {
+                        "RequestVerificationToken": $('input:hidden[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function (response) {
+                        document.getElementById('landing').innerHTML = response.landingtext;
+                        LPusernameTodb(username, response.landingid);
+                    }
+                });
+
+            }
+
+            function LPusernameTodb(username,lpid) {
+                $.ajax({
+                    type: "POST",
+                    url: '/Index?handler=LPidToDB',
+                    headers:
+                    {
+                        "RequestVerificationToken": $('input:hidden[name="__RequestVerificationToken"]').val()
+                    },
+                    data: { "username": username, "lpid": lpid },
+                    contentType: 'application/x-www-form-urlencoded',
+                    dataType: "json",
+                    success: function (response) {
+                        username = response;                      
+                    }
+                });
+            }
+
+            window.onload = function () {
+                
+                var h = (window.innerHeight -280)* 0.5;
+                document.getElementById('chatid').style.height = h + 'px';
+             
+                document.getElementById("message").click();
+                if (username == "") { // вернуть == обратно 
+                    $.ajax({
+                        type: "POST",
+                        url: '/Index?handler=GetUsername',
+                        headers:
+                        {
+                            "RequestVerificationToken": $('input:hidden[name="__RequestVerificationToken"]').val()
+                        },
+                        success: function (response) {
+                            username = response;
+                            getLanding();
+                        }
+                    });
+                }
+            
+            // schedule the first invocation:
+     
+            setTimeout(readMessages, 1000);
+            addWakeUpMessage();
+            }
+
+            $("#callAjax").click(function () {  
+                chatstarted=1;
+                $.ajax({
+                    type: "POST",
+                    url: "/Index?handler=GetAjax",
+                    data: { "msg": document.getElementById('message').value, "username": username },
+                    contentType: 'application/x-www-form-urlencoded',
+                    dataType: "json",
+                    headers:
+                    {
+                        "RequestVerificationToken": $('input:hidden[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function (msg) {
+                       
+                    }
+                });
+
+            });
+        </script>
+    }
+
+
+</div>
+<script type="text/javascript">
+    
+</script>

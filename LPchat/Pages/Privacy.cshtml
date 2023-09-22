@@ -1,0 +1,89 @@
+﻿@page
+@model PrivacyModel
+@{
+    ViewData["Title"] = "Privacy Policy";
+}
+<h1>@ViewData["Title"]</h1>
+
+
+<div class="text-center">
+    <h1 class="display-4">Welcome to LPchat.</h1>
+    <h3> Here you can find a simple Landing Page on the upside part of the page and a chat with operator on the downside. Relax</h3>
+
+    <div>
+        <center>
+            <img src="https://avatars.mds.yandex.net/i?id=73acb9a07255a5102fd334e0ee6a4773b4997803-8271622-images-thumbs&n=13" width="320" />
+            <h4>Алина, 29 лет.</h4>
+        </center>
+    </div>
+
+
+    <section class="chat">
+        <div class="messages-chat" id="innerchat">
+            <div class="message">
+                <p class="text"> Hi, how are you ? </p>
+            </div>
+            <div class="message">
+                <p class="text"> What are you doing tonight ? Want to go take a drink ?</p>
+            </div>
+            <div class="message text-only">
+                <div class="response">
+                    <p class="text"> Hey Megan ! It's been a while 😃</p>
+                </div>
+            </div>
+            <div class="message">
+                <div class="response">
+                    <p class="text"> When can we meet ?</p>
+                </div>
+            </div>
+            <div class="message">
+                <p class="text"> 9 pm at the bar if possible 😳</p>
+            </div>
+        </div>
+    </section>
+    <br>
+
+    <form method="POST">
+        <textarea id="message" class="form-control" name="myMsg" rows="2">
+            Print your message here
+        </textarea>
+        <!--input type="submit" asp-page-handler="SendMsg" value="Отправить" /-->
+    </form>
+    
+    <div id="exam">
+    </div>
+    <button type="button" id="callAjax">Say Hello</button>
+    
+
+
+</div>
+@section Scripts
+    {
+    <script type="text/javascript">
+
+
+        var username = "";
+        
+
+        window.onload = function () {
+            if (username == "") {
+                $.ajax({
+                    type: "POST",
+                    url: '/Index?handler=GetUsername',
+                    headers:
+                    {
+                        "RequestVerificationToken": $('input:hidden[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function (response) {
+                        username = response;
+                    }
+                });
+            }
+
+            // schedule the first invocation:
+            setTimeout(readMessages, 1000);
+        }
+
+        
+    </script>
+    }

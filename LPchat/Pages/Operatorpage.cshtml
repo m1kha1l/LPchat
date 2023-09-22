@@ -1,0 +1,223 @@
+﻿@page
+@model OperatorpageModel
+@{  
+}
+
+<table>
+    <td style="width:20%;">
+        <ul id="userlist" class="userlistclass">
+        </ul>
+    </td>
+    <td style="width:80%;">
+
+
+        <section class="chat" id="chatid">
+            <div class="messages-chat" id="innerchat">
+              <div class="message">           
+                <p class="text"> Hi, how are you ? </p>
+              </div>
+              <div class="message">
+                <p class="text"> What are you doing tonight ? Want to go take a drink ?</p>
+              </div>
+              <div class="message text-only">
+                <div class="response">
+                  <p class="text"> Hey Megan ! It's been a while 😃</p>
+                </div>
+              </div>
+              <div class="message">
+                <div class="response">
+                  <p class="text"> When can we meet ?</p>
+                </div>
+              </div>      
+              <div class="message">            
+                <p class="text"> 9 pm at the bar if possible 😳</p>
+              </div>
+            </div>       
+    </section>
+
+
+    <label id="junklabel">vcdfvf</label>
+
+
+<table style="width:100%">
+    <td style="width:90%">
+        <form method="POST">
+            <textarea id="message" name="myMsg" rows="2" width="100%">
+                        Print your message here
+                </textarea>
+        </form>
+    </td>
+    <td style="width:10%">
+        <button type="button" id="callAjax"><img src="https://static.tildacdn.com/tild3430-3562-4630-b435-343663333062/image.png" style="width:100%; height:100%;" border="0" /></button>
+    </td>
+</table>
+
+
+    </td>
+    </table>
+    
+    @section Scripts
+    {
+
+        <script type="text/javascript">
+        var timeout;
+        var prevuser;
+        var lastapiindex=0;
+         var input = document.getElementById("message");
+          
+            input.addEventListener("keypress", function(event) {                      
+            if (event.key === "Enter") {             
+              event.preventDefault();                  
+                    document.getElementById("callAjax").click();
+                }
+            });
+
+
+        var prevresponse;
+            window.onload = function () {
+          
+            var h = window.innerHeight*0.8;
+            document.getElementById('userlist').style.height = h+'px';
+            document.getElementById('chatid').style.height = h+'px';
+            $.ajax({
+                type: "POST",
+                url: '/Operatorpage?handler=GetChatInfo',
+                headers:
+                {
+                    "RequestVerificationToken": $('input:hidden[name="__RequestVerificationToken"]').val()
+                },
+                success: function (response) {                                          
+                    document.getElementById("userlist").innerHTML = response;
+                },
+                error: function (request, error) {
+                    alert('ajax error: ' + error.responseText);
+                }
+            });
+            // schedule the first invocation:
+            setTimeout(getUserChatTable, 1000);
+
+            //getChatGPTexample();
+            }
+
+        $("#callAjax").click(function () {
+            $.ajax({
+                type: "POST",
+                url: '/Index?handler=InsertMnlMessage',
+                data: { "msg": document.getElementById('message').value, "tousername": prevuser, "fromusername": 'operator' },
+                contentType: 'application/x-www-form-urlencoded',
+                dataType: "json",
+                headers:
+                {
+                    "RequestVerificationToken": $('input:hidden[name="__RequestVerificationToken"]').val()
+                },
+                success: function (msg) {
+                }
+            });
+        });
+        function getUserChatTable() {
+
+            $.ajax({
+                type: "POST",
+                url: '/Operatorpage?handler=GetChatInfo',
+                data: { "selectedusername": prevuser, "globallastapiindex": lastapiindex },
+                contentType: 'application/x-www-form-urlencoded',
+                dataType: "json",
+                headers:
+                {
+                    "RequestVerificationToken": $('input:hidden[name="__RequestVerificationToken"]').val()
+                },
+                success: function (response) {
+                    var newresp = response.split("%#");                   
+                    resp = response.split("%#")[1];
+                    lastapiindex = response.split("%#")[0];
+                    document.getElementById("userlist").innerHTML = resp;
+                },
+                error: function (request, error) {
+                    alert('ajax error: ' + error.responseText);
+                }
+            });
+
+            setTimeout(getUserChatTable, 1000);
+        }
+        function Selectuser(username){
+            readMessages(username);
+        }
+        function readMessages(username) {
+            if (prevuser != username){
+                clearTimeout(timeout);
+                prevuser=username;
+                markMessagesAsRead(username);
+            }           
+                $.ajax({
+                    type: "POST",
+                    url: '/Index?handler=GetMessages',
+                    data: { "username": username },
+                    contentType: 'application/x-www-form-urlencoded',
+                    dataType: "json",
+                    headers:
+                    {
+                        "RequestVerificationToken": $('input:hidden[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function (response) {
+                    if (response != "") 
+                    {
+                        newresponse = response;
+                        newresponse = switchMessages(newresponse);
+                        if (document.getElementById('innerchat').innerHTML != newresponse){
+                            document.getElementById('innerchat').innerHTML = newresponse;
+                            prevresponse = response;
+                            document.getElementById('chatid').scrollTop = document.getElementById('chatid').scrollHeight;
+                        }                        
+                    }
+                    }                    
+                });
+            timeout = setTimeout(readMessages, 1000, username);
+        }
+
+        function switchMessages(input){
+
+            newString=input;
+
+            newString = newString.replaceAll("class=\"response\"", "class=\"responseJunk\"");
+            newString = newString.replaceAll("class=\"mymessage\"", "class=\"response\"");
+            newString = newString.replaceAll("class=\"responseJunk\"", "class=\"mymessage\"");
+            return newString;
+        }
+
+        function markMessagesAsRead(username){
+            alert(username);
+            $.ajax({
+                type: "POST",
+                url: '/Operatorpage?handler=MarkMessagesAsRead',
+                data: { "username": username },
+                contentType: 'application/x-www-form-urlencoded',
+                dataType: "json",
+                headers:
+                {
+                    "RequestVerificationToken": $('input:hidden[name="__RequestVerificationToken"]').val()
+                },
+                success: function (response) {                    
+                }
+
+            });
+        }
+
+
+        function getChatGPTexample() {
+            $.ajax({
+                type: "POST",
+                url: '/Operatorpage?handler=GetChatGPTresponse',
+                contentType: 'application/x-www-form-urlencoded',
+                dataType: "json",
+                headers:
+                {
+                    "RequestVerificationToken": $('input:hidden[name="__RequestVerificationToken"]').val()
+                },
+                success: function (response) {
+                    alert("myresp "+response);
+                }
+
+            });
+        }
+        </script>
+    }
